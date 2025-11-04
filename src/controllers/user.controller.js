@@ -48,9 +48,48 @@ const login = asyncHandler(async (req, res, next) => {
 
     const loggedInUser = await User.findById(user?._id).select("-passwprd -refreshToken")
 
-    return res.status(200).json(new ApiResponse(200, "Userr logged in successfully.", { loggedInUser, accessToken, refreshToken }))
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, "Userr logged in successfully.", { loggedInUser, accessToken, refreshToken }))
 
 
+})
+
+
+
+const logOut = asyncHandler(async(req,res,next) => {
+
+    const user = await User.findById(req.user?._id);
+
+    if(!user){
+        throw new ApiError(400, "user not found.")
+    }
+
+    await User.findByIdAndUpdate(user?._id,{
+        $unset : {
+            refreshToken:1
+        }
+    },{
+        new : true
+    })
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, "Log out successfully.",req.user))
 })
 
 module.exports = { register, login }
