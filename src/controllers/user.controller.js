@@ -3,7 +3,7 @@ const ApiError = require("../utils/ApiError.js");
 const ApiResponse = require("../utils/ApiRresponse.js");
 const asyncHandler = require("../utils/asyncHandler.js")
 
-const register = asyncHandler(async (req, resizeBy, next) => {
+const register = asyncHandler(async (req, res, next) => {
     const { userName, email, password } = req.body;
 
     const exstingUser = await User.findOne({ email });
@@ -35,7 +35,7 @@ const login = asyncHandler(async (req, res, next) => {
 
     //check password
 
-    const isPasswordCorrect = user.isPasswordCorrect(password)
+    const isPasswordCorrect = user.isPasswordMatched(password)
 
     if (!isPasswordCorrect) {
         throw new ApiError(401, "Passowrd incorrect.", {})
@@ -48,7 +48,7 @@ const login = asyncHandler(async (req, res, next) => {
 
     const loggedInUser = await User.findById(user?._id).select("-passwprd -refreshToken")
 
-    return res.status(200).json(new ApiResponse(200, "Userr logged in successfully."))
+    return res.status(200).json(new ApiResponse(200, "Userr logged in successfully.", { loggedInUser, accessToken, refreshToken }))
 
 
 })
