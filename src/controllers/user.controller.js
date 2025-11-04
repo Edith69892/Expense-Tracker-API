@@ -92,4 +92,4 @@ const logOut = asyncHandler(async(req,res,next) => {
     .json(new ApiResponse(200, "Log out successfully.",req.user))
 })
 
-module.exports = { register, login }
+module.exports = { register, login, logOut }
