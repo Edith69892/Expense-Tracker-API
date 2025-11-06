@@ -1,36 +1,36 @@
-const {Expense} = require("../models/expense.models.js");
+const { Expense } = require("../models/expense.models.js");
 const User = require("../models/user.models.js");
 const ApiError = require("../utils/ApiError.js");
 const ApiResponse = require("../utils/ApiResponse.js");
 const asyncHandler = require("../utils/asyncHandler.js");
 
-const addExpense = asyncHandler( async (req,res,next) => {
-    const { title , amount , type , category ,date} = req.body;
+const addExpense = asyncHandler(async (req, res, next) => {
+    const { title, amount, type, category, date } = req.body;
 
     const user = await User.findById(req.user?._id)
 
-    if(!user){
+    if (!user) {
         throw new ApiError(400, "User not found, please log in or register account.")
     }
 
-   if (!title || !amount || !type || !category || !date) {
-    throw new ApiError(400, "All fields are required");
-}
+    if (!title || !amount || !type || !category || !date) {
+        throw new ApiError(400, "All fields are required");
+    }
 
     const expense = await Expense.create({
-        title,amount,type , category ,date, owner: req.user?._id
+        title, amount, type, category, date, owner: req.user?._id
     })
 
-      if(type.toString() === "income"){
-        await User.findByIdAndUpdate(req.user?._id,{
+    if (type.toString() === "income") {
+        await User.findByIdAndUpdate(req.user?._id, {
             $set: {
-                balance : user.balance + Number(amount)
+                balance: user.balance + Number(amount)
             }
         })
-    }else{
-        await User.findByIdAndUpdate(req.user?._id,{
+    } else {
+        await User.findByIdAndUpdate(req.user?._id, {
             $set: {
-                balance : user.balance - Number(amount)
+                balance: user.balance - Number(amount)
             }
         })
     }
@@ -53,7 +53,7 @@ const updateExpense = asyncHandler(async (req, res, next) => {
     }
 
     // old signed
-    const oldSigned =
+    const oldExpenseAmount =
         expense.type === "income"
             ? Number(expense.amount)
             : -Number(expense.amount);
@@ -64,16 +64,16 @@ const updateExpense = asyncHandler(async (req, res, next) => {
 
     const newType = req.body.type || expense.type;
 
-    const newSigned = newType === "income" ? newAmount : -newAmount;
+    const newExpenseAmount = newType === "income" ? newAmount : -newAmount;
 
     // calculate difference
-    const difference = newSigned - oldSigned;
+    const difference = newExpenseAmount - oldExpenseAmount;
 
-   const updatedUser = await User.findByIdAndUpdate(
-    req.user._id,
-    { $set: { balance: user.balance + difference } },
-    { new: true }
-);
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: { balance: user.balance + difference } },
+        { new: true }
+    );
 
     // update expense fields
     expense.title = req.body.title || expense.title;
@@ -86,7 +86,40 @@ const updateExpense = asyncHandler(async (req, res, next) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, "Expense updated successfully.", {expense, balance : updatedUser}));
+        .json(new ApiResponse(200, "Expense updated successfully.", { expense, balance: updatedUser }));
 });
 
-module.exports = {addExpense, updateExpense}
+const deleteExpense = asyncHandler(async (req, res, next) => {
+    const { expenseId } = req.params;
+
+    const user = await User.findById(req.user?._id);
+    if (!user) throw new ApiError(400, "User not found, please log in or register account.");
+    if (!expenseId) throw new ApiError(400, "Expense Id Invalid.");
+
+    const expense = await Expense.findById(expenseId);
+    if (!expense) throw new ApiError(400, "Expense not found.");
+
+    if (expense.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Not authorized to update this expense.");
+    }
+
+    const updateAmount = expense.type === "income" ? Number(expense.amount) : -Number(expense.amount)
+
+    const updatedUser = await User.findByIdAndUpdate(user?._id,
+        {
+            $set: { balance: user.balance - updateAmount }
+        },
+        {
+            new: true
+        }
+    )
+
+    await Expense.findByIdAndDelete(expense?._id);
+
+    return res.status(200).json(new ApiResponse(200, "Expense deleted successfully.", {
+        deletedExpense: expense,
+        balance: updatedUser.balance
+    }))
+})
+
+module.exports = { addExpense, updateExpense, deleteExpense }
