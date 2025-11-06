@@ -16,7 +16,9 @@ app.get("/", (req, res) => {
 // import routes
 
 const userRoute = require("./src/routes/user.route.js")
+const ExpenseRoute = require("./src/routes/expense.route.js")
 
 app.use("/api/v1/users", userRoute)
+app.use("/api/v1/expense", ExpenseRoute)
 
 module.exports = {app}
