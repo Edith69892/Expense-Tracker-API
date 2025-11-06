@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String,
     refreshToken: String,
+    balance: { type: Number, default: 0 }
 
 }, { timestamps: true })
 
