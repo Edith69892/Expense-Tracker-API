@@ -1,8 +1,10 @@
 const  Router = require("express");
-const { addExpense } = require("../controllers/expense.conntroller.js");
+const { addExpense, updateExpense } = require("../controllers/expense.conntroller.js");
+const verifyJwt  = require("../middlewares/auth.middleware.js")
 
 const router = Router();
 
-router.route("/").post(addExpense)
+router.route("/").post(verifyJwt,addExpense)
+router.route("/").patch(verifyJwt,updateExpense)
 
 module.exports = router
