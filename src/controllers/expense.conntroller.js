@@ -1,4 +1,3 @@
-const { use } = require("react");
 const {Expense} = require("../models/expense.models.js");
 const User = require("../models/user.models.js");
 const ApiError = require("../utils/ApiError.js");
@@ -18,8 +17,6 @@ const addExpense = asyncHandler( async (req,res,next) => {
     throw new ApiError(400, "All fields are required");
 }
 
-
-
     const expense = await Expense.create({
         title,amount,type , category ,date, owner: req.user?._id
     })
@@ -27,13 +24,13 @@ const addExpense = asyncHandler( async (req,res,next) => {
       if(type.toString() === "income"){
         await User.findByIdAndUpdate(req.user?._id,{
             $set: {
-                balance : user.balance + amount
+                balance : user.balance + Number(amount)
             }
         })
     }else{
         await User.findByIdAndUpdate(req.user?._id,{
             $set: {
-                balance : user.balance - amount
+                balance : user.balance - Number(amount)
             }
         })
     }
@@ -44,3 +41,5 @@ const addExpense = asyncHandler( async (req,res,next) => {
 const updateExpense = asyncHandler(async (req,res,next) => {
 
 })
+
+module.exports = {addExpense}
