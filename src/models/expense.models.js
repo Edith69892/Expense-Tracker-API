@@ -10,7 +10,7 @@ const expenseSchema = new mongoose.Schema({
         type : mongoose.Types.ObjectId,
         ref : "User"
     }
-});
+},{timestamps : true});
 
 const Expense = mongoose.model("Expense", expenseSchema);
 
