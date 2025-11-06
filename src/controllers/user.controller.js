@@ -1,6 +1,6 @@
 const User = require("../models/user.models.js");
 const ApiError = require("../utils/ApiError.js");
-const ApiResponse = require("../utils/ApiRresponse.js");
+const ApiResponse = require("../utils/ApiResponse.js");
 const asyncHandler = require("../utils/asyncHandler.js")
 
 const register = asyncHandler(async (req, res, next) => {
