@@ -39,7 +39,51 @@ const addExpense = asyncHandler( async (req,res,next) => {
 });
 
 const updateExpense = asyncHandler(async (req,res,next) => {
+    const {expenseId} = req.params;
+    const user = await User.findById(req.user?._id)
+
+    if(!user){
+        throw new ApiError(400, "User not found, please log in or register account.")
+    }
+    if(!expenseId){
+        throw new ApiError(400, "Expense Id Invalid.")
+    }
+
+    const expense = await Expense.findById(expenseId);
+
+    if(!expense){
+        throw new ApiError(400, "Expense not found.")
+    }
+
+     if (expense.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, "Not authorized to update this expense.");
+    }
+
+    //balance update
+    let oldSigned = expense.type === "income" ? Number(expense.amount) : - Number(expense.amount);
+    let newAmount = req.body?.amount !== undefined ? Number(req.body?.amount) : Number(expense.amount);
+
+    let newType = req.body?.type || expense.type;
+
+    let newSigned = newType === "income" ? Number(newAmount) : -Number(newAmount);
+
+    let difference = newSigned - oldSigned;
+
+    await User.findByIdAndUpdate(req.user?._id,{
+        balance : user.balance + difference
+    })
+
+    expense.title = req.body?.title || expense.title;
+    expense.amount = newAmount
+    expense.type = newType
+    expense.category = req.body?.category || expense.category;
+    expense.date = req.body?.date || expense.date;
+    
+
+    await expense.save();
+
+    return  res.status(200).json(new ApiResponse(200, "Expense updated successfully."))
 
 })
 
-module.exports = {addExpense}
+module.exports = {addExpense, updateExpense}
