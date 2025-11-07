@@ -8,6 +8,6 @@ router.route("/").post(verifyJwt,addExpense)
 router.route("/:expenseId").patch(verifyJwt,updateExpense)
 router.route("/:expenseId").delete(verifyJwt,deleteExpense)
 router.route("/").get(verifyJwt,getAllTransactions)
-router.route("/filter").get(verifyJwt,searchExpense)
+router.route("/search").get(verifyJwt,searchExpense)
 
 module.exports = router
