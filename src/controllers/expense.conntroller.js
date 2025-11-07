@@ -210,6 +210,22 @@ const searchExpense = asyncHandler(async (req, res, next) => {
     );
 })
 
+const filteredExpenseByCategory = asyncHandler( async(req,res,next) => {
+    const { category } = req.query;
+
+    const user = await User.findById(req.user?._id);
+
+    if(!user) throw new ApiError(400, "Please loged in or register account.")
+    if(!category) throw new ApiError(400, "please enterd category.");
+
+    const expenses = await Expense.find({
+        owner : user?._id,
+        category : {$regex : category, $options : "i"}
+    }).select("title amount").sort({ createdAt : -1})
+
+    return res.status(200).json(new ApiResponse(200, "Expense fetched successfully.",expenses))
+})
 
 
-module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, searchExpense }
+
+module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, searchExpense, filteredExpenseByCategory }
