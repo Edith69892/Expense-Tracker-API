@@ -139,7 +139,17 @@ const getAllTransactions = asyncHandler(async (req, res, next) => {
 
 const getFilteredTransaction = asyncHandler(async (req, res, next) => {
 
-    const { query } = req.query
+    // with date range 
+    const { query , startDate, endDate } = req.query
+
+    const matchStage = { owner : req.user?._id}
+
+    if(startDate && endDate){
+        matchStage.date = {
+            $gte : new Date(startDate),
+            $lte : new Date(endDate)
+        }
+    }
 
     // const expenses = await Expense.aggregate([
     //     {
@@ -186,9 +196,7 @@ const getFilteredTransaction = asyncHandler(async (req, res, next) => {
             }
         },
         {
-            $match: {
-                owner: req.user?._id
-            },
+            $match: matchStage
 
         },
 
