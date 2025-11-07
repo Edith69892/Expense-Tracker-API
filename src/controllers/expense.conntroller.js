@@ -122,4 +122,18 @@ const deleteExpense = asyncHandler(async (req, res, next) => {
     }))
 })
 
-module.exports = { addExpense, updateExpense, deleteExpense }
+const getAllTransactions = asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.user?._id);
+
+    if (!user) throw new ApiError(400, "User not found, please log in or register account.");
+
+    const expenses = await Expense.find({ owner: user?._id }).sort({ createdAt: -1 })
+
+    if (expenses.length === 0)
+        throw new ApiError(404, "No transactions found.");
+
+    return res.status(200).json(new ApiResponse(200, "Fetched All Transactions successfully.", { Transactions: expenses }))
+
+})
+
+module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions }
