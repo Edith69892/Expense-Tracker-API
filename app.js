@@ -17,8 +17,10 @@ app.get("/", (req, res) => {
 
 const userRoute = require("./src/routes/user.route.js")
 const ExpenseRoute = require("./src/routes/expense.route.js")
+const dashboardRoute = require("./src/routes/dashBoard.route.js")
 
 app.use("/api/v1/users", userRoute)
 app.use("/api/v1/expense", ExpenseRoute)
+app.use("/api/v1/dashboard", dashboardRoute)
 
 module.exports = {app}
