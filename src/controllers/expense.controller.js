@@ -150,59 +150,59 @@ const searchExpense = asyncHandler(async (req, res, next) => {
         }
     }
 
-    // const expenses = await Expense.aggregate([
-    //     {
-    //         $match: {
-    //             owner: req.user?._id
-    //         },
-
-    //     },
-    //     {
-    //         $addFields: {
-    //             dateString: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
-    //         }
-    //     },
-    //     {
-    //         $match: {
-    //             $or: [
-    //                 { title: { $regex: query, $options: "i" } },
-    //                 { category: { $regex: query, $options: "i" } },
-    //                 { type: { $regex: query, $options: "i" } },
-    //                 { dateString: { $regex: query, $options: "i" } },
-    //             ]
-    //         }
-    //     },
-    //     {
-    //         $sort: { createdAt: -1 }
-    //     }
-    // ])
-
-    //////// Using $search /////////////
-
     const expenses = await Expense.aggregate([
+        {
+            $match: {
+                owner: req.user?._id
+            },
+
+        },
         {
             $addFields: {
                 dateString: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
             }
         },
         {
-            $search: {
-                index: "default",
-                text: {
-                    query: query,
-                    path: ["title", "category", "type", "dateString"]
-                }
+            $match: {
+                $or: [
+                    { title: { $regex: query, $options: "i" } },
+                    { category: { $regex: query, $options: "i" } },
+                    { type: { $regex: query, $options: "i" } },
+                    { dateString: { $regex: query, $options: "i" } },
+                ]
             }
         },
-        {
-            $match: matchStage
-
-        },
-
         {
             $sort: { createdAt: -1 }
         }
     ])
+
+    //////// Using $search /////////////
+
+    // const expenses = await Expense.aggregate([
+    //     {
+    //         $addFields: {
+    //             dateString: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+    //         }
+    //     },
+    //     {
+    //         $search: {
+    //             index: "default",
+    //             text: {
+    //                 query: query,
+    //                 path: ["title", "category", "type", "dateString"]
+    //             }
+    //         }
+    //     },
+    //     {
+    //         $match: matchStage
+
+    //     },
+
+    //     {
+    //         $sort: { createdAt: -1 }
+    //     }
+    // ])
 
     return res.status(200).json(
         new ApiResponse(200, "Fetched successfully.", expenses)
