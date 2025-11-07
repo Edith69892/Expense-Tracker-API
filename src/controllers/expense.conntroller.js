@@ -137,7 +137,7 @@ const getAllTransactions = asyncHandler(async (req, res, next) => {
 
 })
 
-const getFilteredTransaction = asyncHandler(async (req, res, next) => {
+const searchExpense = asyncHandler(async (req, res, next) => {
 
     // with date range 
     const { query , startDate, endDate } = req.query
@@ -210,4 +210,6 @@ const getFilteredTransaction = asyncHandler(async (req, res, next) => {
     );
 })
 
-module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, getFilteredTransaction }
+
+
+module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, searchExpense }
