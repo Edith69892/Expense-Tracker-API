@@ -140,14 +140,14 @@ const getAllTransactions = asyncHandler(async (req, res, next) => {
 const searchExpense = asyncHandler(async (req, res, next) => {
 
     // with date range 
-    const { query , startDate, endDate } = req.query
+    const { query, startDate, endDate } = req.query
 
-    const matchStage = { owner : req.user?._id}
+    const matchStage = { owner: req.user?._id }
 
-    if(startDate && endDate){
+    if (startDate && endDate) {
         matchStage.date = {
-            $gte : new Date(startDate),
-            $lte : new Date(endDate)
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
         }
     }
 
@@ -210,22 +210,91 @@ const searchExpense = asyncHandler(async (req, res, next) => {
     );
 })
 
-const filteredExpenseByCategory = asyncHandler( async(req,res,next) => {
+const filteredExpenseByCategory = asyncHandler(async (req, res, next) => {
     const { category } = req.query;
 
     const user = await User.findById(req.user?._id);
 
-    if(!user) throw new ApiError(400, "Please loged in or register account.")
-    if(!category) throw new ApiError(400, "please enterd category.");
+    if (!user) throw new ApiError(400, "Please loged in or register account.")
+    if (!category) throw new ApiError(400, "please enterd category.");
 
     const expenses = await Expense.find({
-        owner : user?._id,
-        category : {$regex : category, $options : "i"}
-    }).select("title amount").sort({ createdAt : -1})
+        owner: user?._id,
+        category: { $regex: category, $options: "i" }
+    }).select("title amount").sort({ createdAt: -1 })
 
-    return res.status(200).json(new ApiResponse(200, "Expense fetched successfully.",expenses))
+    return res.status(200).json(new ApiResponse(200, "Expense fetched successfully.", expenses))
+})
+
+const getMonthExpense = asyncHandler(async (req, res, next) => {
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) throw new ApiError(400, "Please loged in or register account.")
+
+    const expenses = await Expense.aggregate([
+        {
+            $match: {
+                owner: user?._id,
+            }
+        },
+        {
+            $group: {
+                _id: { year: { $year: "$date" }, month: { $month: "$date" }, type: "$type" },
+                totalAmount: { $sum: "$amount" }
+            }
+        }
+    ])
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "Monthly analytics fetched successfully", expenses));
 })
 
 
+const dashboard = asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.user?._id);
 
-module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, searchExpense, filteredExpenseByCategory }
+    if (!user) throw new ApiError(400, "Please loged in or register account.");
+
+    const result = await Expense.aggregate([
+        {
+            $match: { owner: user?._id }
+        },
+        {
+            $group: {
+                _id: null,
+                totalIncome: {
+                    $sum: {
+                        $cond: [
+                            {$eq: ["$type", "income"]},
+                            "$amount",
+                            0
+                        ]
+                    }
+                },
+                totalExpense: {
+                    $sum: {
+                        $cond: [
+                            {$eq: ["$type", "expense"]},
+                            "$amount",
+                            0
+                        ]
+                    }
+                }
+            }
+        }
+    ]);
+
+    const income = result[0]?.totalIncome || 0;
+    const expense = result[0]?.totalExpense || 0;
+    const balance = income - expense;
+
+    return res.status(200).json({
+        income,
+        expense,
+        balance
+    })
+})
+
+module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, searchExpense, filteredExpenseByCategory,dashboard }
