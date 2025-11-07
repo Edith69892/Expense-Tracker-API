@@ -1,5 +1,5 @@
 const  Router = require("express");
-const { addExpense, updateExpense, deleteExpense, getAllTransactions,  searchExpense, filteredExpenseByCategory, getMonthExpense } = require("../controllers/expense.conntroller.js");
+const { addExpense, updateExpense, deleteExpense, getAllTransactions,  searchExpense, filteredExpenseByCategory, getMonthExpense } = require("../controllers/expense.controller.js");
 const verifyJwt  = require("../middlewares/auth.middleware.js")
 
 const router = Router();
