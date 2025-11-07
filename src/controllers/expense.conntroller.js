@@ -1,5 +1,6 @@
 const { Expense } = require("../models/expense.models.js");
 const User = require("../models/user.models.js");
+const { options } = require("../routes/expense.route.js");
 const ApiError = require("../utils/ApiError.js");
 const ApiResponse = require("../utils/ApiResponse.js");
 const asyncHandler = require("../utils/asyncHandler.js");
@@ -136,4 +137,69 @@ const getAllTransactions = asyncHandler(async (req, res, next) => {
 
 })
 
-module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions }
+const getFilteredTransaction = asyncHandler(async (req, res, next) => {
+
+    const { query } = req.query
+
+    // const expenses = await Expense.aggregate([
+    //     {
+    //         $match: {
+    //             owner: req.user?._id
+    //         },
+
+    //     },
+    //     {
+    //         $addFields: {
+    //             dateString: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+    //         }
+    //     },
+    //     {
+    //         $match: {
+    //             $or: [
+    //                 { title: { $regex: query, $options: "i" } },
+    //                 { category: { $regex: query, $options: "i" } },
+    //                 { type: { $regex: query, $options: "i" } },
+    //                 { dateString: { $regex: query, $options: "i" } },
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $sort: { createdAt: -1 }
+    //     }
+    // ])
+
+    //////// Using $search /////////////
+
+    const expenses = await Expense.aggregate([
+        {
+            $addFields: {
+                dateString: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+            }
+        },
+        {
+            $search: {
+                index: "default",
+                text: {
+                    query: query,
+                    path: ["title", "category", "type", "dateString"]
+                }
+            }
+        },
+        {
+            $match: {
+                owner: req.user?._id
+            },
+
+        },
+
+        {
+            $sort: { createdAt: -1 }
+        }
+    ])
+
+    return res.status(200).json(
+        new ApiResponse(200, "Fetched successfully.", expenses)
+    );
+})
+
+module.exports = { addExpense, updateExpense, deleteExpense, getAllTransactions, getFilteredTransaction }
